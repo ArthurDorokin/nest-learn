@@ -27,8 +27,9 @@ export class TasksController {
     return this.tasksService.findAll();
   }
 
-  // GET /tasks/5 - получить одну. @Param('id') - часть URL, всегда строка
-  // "+id" превращает строку в число
+  // GET /tasks/5 - получить одну. @Param('id') - часть URL, по сути всегда строка.
+  // ParseIntPipe превращает её в число, а если это не число (/tasks/abc) - сразу отвечает 400.
+  // Методы сервиса возвращают Promise (запрос в базу) - Nest сам дожидается результата.
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.tasksService.findOne(id);

@@ -1,124 +1,317 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# nest-learn
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Учебный REST API на **NestJS + TypeScript + PostgreSQL (TypeORM)**: список задач с созданием,
+чтением, обновлением и удалением (CRUD), валидацией входных данных и хранением в базе.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Что умеет
 
-## Description
+| Метод    | URL          | Что делает                          |
+| -------- | ------------ | ----------------------------------- |
+| `POST`   | `/tasks`     | создать задачу                      |
+| `GET`    | `/tasks`     | получить все задачи                 |
+| `GET`    | `/tasks/:id` | получить одну задачу                |
+| `PATCH`  | `/tasks/:id` | изменить задачу (любые поля частично) |
+| `DELETE` | `/tasks/:id` | удалить задачу                      |
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Сервер слушает порт **8000**.
 
-## Project setup
+---
+
+## Как запустить этот проект
+
+Нужны: **Node.js 20+**, **Docker**.
 
 ```bash
-$ npm install
+npm install            # поставить зависимости
+docker compose up -d   # запустить PostgreSQL в контейнере
+npm run start:dev      # запустить сервер с автоперезапуском
 ```
 
-## Compile and run the project
+Проверка: открой http://localhost:8000/tasks - должен прийти `[]`.
+Запросы для проверки лежат в файле `requests.http` (в PhpStorm рядом с каждым есть кнопка ▶).
+
+Остановить базу: `docker compose stop`. Данные при этом сохраняются
+(они лежат в Docker-томе `pgdata`). Удалить вместе с данными: `docker compose down -v`.
+
+---
+
+## Как сделать такое же приложение с нуля
+
+### 0. Подготовка
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+node -v                      # нужен Node.js 20+
+docker --version             # нужен Docker
+npm i -g @nestjs/cli         # консольная утилита Nest
 ```
 
-## Run tests
+### 1. Создать проект
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+mkdir my-app && cd my-app
+nest new .
 ```
 
-## Deployment
+Ответы на вопросы установщика: пакетный менеджер **npm**, на вопрос про `@nestjs/observe` - **n**
+(это мониторинг для продакшена, для учёбы не нужен), модули - **CJS (CommonJS) with jest**.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Проверь, что всё работает: `npm run start:dev` и открой http://localhost:3000 - будет `Hello World!`.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+> Порт можно поменять в `src/main.ts`: `app.listen(process.env.PORT ?? 8000)`.
+
+### 2. Сгенерировать модуль с CRUD
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+nest g resource tasks
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Ответы: транспорт **REST API**, генерировать CRUD entry points - **yes**.
 
-## Observability
+Появится папка `src/tasks` с модулем, контроллером, сервисом, DTO и сущностью,
+а в `app.module.ts` модуль подключится сам.
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+| Файл                         | Зачем                                                              |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `tasks.module.ts`            | «Коробка» фичи: собирает контроллер, сервис и доступ к таблице     |
+| `tasks.controller.ts`        | Маршруты: принять запрос, вызвать сервис, вернуть ответ            |
+| `tasks.service.ts`           | Вся логика: найти, создать, изменить, удалить                      |
+| `dto/create-task.dto.ts`     | Какие данные клиент может прислать при создании                    |
+| `dto/update-task.dto.ts`     | То же при изменении (все поля необязательные)                      |
+| `entities/task.entity.ts`    | Как задача хранится в базе (станет таблицей)                       |
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project:
+### 3. Валидация входных данных
 
 ```bash
-$ npm install @nestjs/observe
+npm i class-validator class-transformer
 ```
 
-Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
+**а) `src/main.ts`** - включить проверку глобально (до `app.listen`):
 
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
+```ts
+import { ValidationPipe } from '@nestjs/common';
 
-## Resources
+app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: true, // выкинуть поля, которых нет в DTO
+    forbidNonWhitelisted: true, // а если такие пришли - ответить 400
+    transform: true, // превращать JSON в экземпляр DTO
+  }),
+);
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+**б) `dto/create-task.dto.ts`** - правила на поля:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```ts
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-## Support
+export class CreateTaskDto {
+  @IsString()
+  @IsNotEmpty()
+  title: string;
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+  @IsOptional() // ставить выше остальных
+  @IsString()
+  description?: string;
+}
+```
 
-## Stay in touch
+**в) `dto/update-task.dto.ts`** - `PartialType` копирует поля и правила, добавляем `done`:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```ts
+import { PartialType } from '@nestjs/mapped-types';
+import { IsBoolean, IsOptional } from 'class-validator';
+import { CreateTaskDto } from './create-task.dto';
 
-## License
+export class UpdateTaskDto extends PartialType(CreateTaskDto) {
+  @IsBoolean()
+  @IsOptional()
+  done?: boolean;
+}
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+**г) `tasks.controller.ts`** - id из URL превращаем в число (`/tasks/abc` даст 400):
+
+```ts
+@Get(':id')
+findOne(@Param('id', ParseIntPipe) id: number) {
+  return this.tasksService.findOne(id);
+}
+```
+
+То же в `update` и `remove`; `ParseIntPipe` импортируется из `@nestjs/common`.
+
+### 4. База данных PostgreSQL в Docker
+
+Создай `docker-compose.yml` в корне:
+
+```yaml
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nest
+      POSTGRES_PASSWORD: nest
+      POSTGRES_DB: nest_learn
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+```
+
+```bash
+docker compose up -d
+docker compose ps        # статус должен быть running
+```
+
+### 5. Подключить TypeORM
+
+```bash
+npm i @nestjs/typeorm typeorm@^0.3 pg
+```
+
+**а) `src/app.module.ts`** - подключение к базе в `imports`:
+
+```ts
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+TypeOrmModule.forRoot({
+  type: 'postgres',
+  host: 'localhost',
+  port: 5432,
+  username: 'nest',
+  password: 'nest',
+  database: 'nest_learn',
+  autoLoadEntities: true, // подхватывать сущности из forFeature
+  synchronize: true, // сам создаёт таблицы по сущностям (ТОЛЬКО для учёбы)
+}),
+```
+
+**б) `entities/task.entity.ts`** - класс становится таблицей:
+
+```ts
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+
+@Entity()
+export class Task {
+  @PrimaryGeneratedColumn() // автоинкрементный id
+  id: number;
+
+  @Column()
+  title: string;
+
+  @Column({ type: 'text', nullable: true }) // длинный текст, можно пусто
+  description?: string;
+
+  @Column({ default: false })
+  done: boolean;
+}
+```
+
+**в) `tasks.module.ts`** - дать модулю доступ к таблице:
+
+```ts
+imports: [TypeOrmModule.forFeature([Task])],
+```
+
+**г) `tasks.service.ts`** - вместо массива работаем через репозиторий:
+
+```ts
+constructor(
+  @InjectRepository(Task)
+  private readonly tasksRepository: Repository<Task>,
+) {}
+
+create(dto: CreateTaskDto) {
+  return this.tasksRepository.save(this.tasksRepository.create(dto));
+}
+findAll() {
+  return this.tasksRepository.find();
+}
+async findOne(id: number) {
+  const task = await this.tasksRepository.findOneBy({ id });
+  if (!task) throw new NotFoundException(`Task #${id} not found`);
+  return task;
+}
+async update(id: number, dto: UpdateTaskDto) {
+  const task = await this.findOne(id);
+  Object.assign(task, dto);
+  return this.tasksRepository.save(task);
+}
+async remove(id: number) {
+  await this.tasksRepository.remove(await this.findOne(id));
+}
+```
+
+Контроллер при этом менять не нужно.
+
+### 6. Проверить
+
+В `requests.http` лежат запросы на все сценарии. Ожидаемые ответы:
+
+| Запрос                                   | Ответ |
+| ---------------------------------------- | ----- |
+| `POST /tasks` с `{"title": "..."}`       | 201, созданная задача |
+| `POST /tasks` с `{}` или `{"title": 123}` | 400   |
+| `POST /tasks` с лишним полем             | 400   |
+| `GET /tasks/abc`                         | 400   |
+| `GET /tasks/99999`                       | 404   |
+
+Главная проверка базы: создай задачу, перезапусти сервер и сделай `GET /tasks` - задача должна остаться.
+
+Посмотреть таблицу глазами: в PhpStorm **Database → + → PostgreSQL** с параметрами
+`localhost`, `5432`, пользователь `nest`, пароль `nest`, база `nest_learn`
+(при первом подключении нажми **Download** драйвера).
+
+---
+
+## Шпаргалка: что за что отвечает
+
+```
+Клиент -> Controller -> Service -> Repository -> PostgreSQL
+          (маршрут)     (логика)   (запросы)     (данные)
+```
+
+| Понятие          | Простыми словами                                                            |
+| ---------------- | --------------------------------------------------------------------------- |
+| **Module**       | коробка фичи; Nest узнаёт о приложении, обходя модули                       |
+| **Controller**   | принимает HTTP-запрос и отдаёт ответ, логики не содержит                    |
+| **Service**      | бизнес-логика; получает зависимости через конструктор (DI)                  |
+| **DTO**          | форма данных от клиента + правила проверки                                  |
+| **Entity**       | класс, который становится таблицей в базе                                   |
+| **Pipe**         | преобразует/проверяет значение перед методом (`ValidationPipe`, `ParseIntPipe`) |
+| **Repository**   | готовые методы работы с таблицей (`find`, `save`, `remove`)                 |
+| **Dependency Injection** | класс просит нужное в конструкторе, Nest создаёт и подставляет      |
+
+Основные декораторы: `@Module`, `@Controller`, `@Injectable` (роль класса); `@Get`, `@Post`,
+`@Patch`, `@Delete` (маршрут); `@Body`, `@Param`, `@Query` (данные запроса);
+`@IsString`, `@IsOptional` (валидация); `@Entity`, `@Column`, `@PrimaryGeneratedColumn` (таблица).
+
+---
+
+## Команды
+
+| Команда                     | Что делает                              |
+| --------------------------- | --------------------------------------- |
+| `npm run start:dev`         | запуск с автоперезапуском               |
+| `npm run build`             | сборка                                  |
+| `npm run format`            | форматирование Prettier                 |
+| `npm run lint`              | проверка линтером                       |
+| `npm test`                  | unit-тесты                              |
+| `docker compose up -d`      | запустить базу                          |
+| `docker compose stop`       | остановить базу (данные сохранятся)     |
+| `docker compose down -v`    | удалить базу вместе с данными           |
+| `nest g resource <имя>`     | сгенерировать модуль с CRUD             |
+
+## Что дальше изучать
+
+1. Конфиг через `.env` и `@nestjs/config` (пароли не в коде)
+2. Связи между таблицами: пользователи и их задачи
+3. Авторизация: регистрация, логин, JWT, guards
+4. Миграции вместо `synchronize: true`
+5. Swagger-документация и тесты (unit и e2e)
+
+Документация: https://docs.nestjs.com
