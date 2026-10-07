@@ -5,7 +5,14 @@
  * Дальше добавим сюда декораторы валидации (@IsString, @IsNotEmpty ...).
  * Аналог типа payload'а запроса на фронте, только с реальной проверкой в рантайме.
  */
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
 export class CreateTaskDto {
+  @IsString()
+  @IsNotEmpty()
   title: string;
-  description?: string; // "?" - поле необязательное
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

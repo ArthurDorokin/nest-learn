@@ -1,3 +1,5 @@
+### ===== Обычные запросы =====
+
 ### Создать задачу
 POST http://localhost:8000/tasks
 Content-Type: application/json
@@ -17,4 +19,78 @@ Content-Type: application/json
 { "done": true }
 
 ### Удалить
-DELETE http://localhost:8000/tasks/2
+DELETE http://localhost:8000/tasks/1
+
+
+### ===== Проверка валидации =====
+### Ожидание для каждого запроса написано в его названии.
+### Сначала создай задачу (запрос выше), чтобы id 1 существовал.
+
+### Ожидаем 201: корректное создание, с description
+POST http://localhost:8000/tasks
+Content-Type: application/json
+
+{ "title": "Купить молоко", "description": "2 литра" }
+
+### Ожидаем 400: нет title ("title should not be empty", "title must be a string")
+POST http://localhost:8000/tasks
+Content-Type: application/json
+
+{ }
+
+### Ожидаем 400: пустой title
+POST http://localhost:8000/tasks
+Content-Type: application/json
+
+{ "title": "" }
+
+### Ожидаем 400: title не строка ("title must be a string")
+POST http://localhost:8000/tasks
+Content-Type: application/json
+
+{ "title": 123 }
+
+### Ожидаем 400: description не строка ("description must be a string")
+POST http://localhost:8000/tasks
+Content-Type: application/json
+
+{ "title": "ok", "description": 5 }
+
+### Ожидаем 400: лишнее поле ("property admin should not exist")
+POST http://localhost:8000/tasks
+Content-Type: application/json
+
+{ "title": "ok", "admin": true }
+
+### Ожидаем 400: клиент пытается задать id и done при создании
+POST http://localhost:8000/tasks
+Content-Type: application/json
+
+{ "title": "ok", "id": 999, "done": true }
+
+### Ожидаем 400: id в URL не число ("numeric string is expected")
+GET http://localhost:8000/tasks/abc
+
+### Ожидаем 404: задачи с таким id нет ("Task #99 not found")
+GET http://localhost:8000/tasks/99
+
+### Ожидаем 400: done не boolean ("done must be a boolean value")
+PATCH http://localhost:8000/tasks/1
+Content-Type: application/json
+
+{ "done": "yes" }
+
+### Ожидаем 200: PATCH только с одним полем (остальные не обязательны)
+PATCH http://localhost:8000/tasks/1
+Content-Type: application/json
+
+{ "title": "Новое название" }
+
+### Ожидаем 400: PATCH с title неправильного типа
+PATCH http://localhost:8000/tasks/1
+Content-Type: application/json
+
+{ "title": 123 }
+
+### Ожидаем 400: DELETE с id не числом
+DELETE http://localhost:8000/tasks/abc

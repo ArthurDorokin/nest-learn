@@ -5,10 +5,19 @@
  */
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   // Создаём приложение, передав корневой модуль (от него Nest строит всё дерево)
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   // Запускаем HTTP-сервер. Порт берём из переменной окружения PORT, иначе 8000.
   // Позже сюда же добавим глобальные штуки: ValidationPipe, Swagger и т.п.
